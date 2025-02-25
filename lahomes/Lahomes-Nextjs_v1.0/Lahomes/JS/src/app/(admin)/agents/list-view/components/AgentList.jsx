@@ -24,11 +24,12 @@ const AgentList = ({ requestData }) => {
   useEffect(() => {
     const fetchInstructors = async () => {
       try {
-        const response = await axios.post(`https://twpwlfdg-5000.inc1.devtunnels.ms/instructors`,{
-          admin_unique_id:id
-
+        const response = await axios.post(`http://localhost:5000/fetchinstructors`, {
+          admin_unique_id: id
         });
-        setInstructors(response.data);
+     
+        setInstructors(response.data.instructors);
+
         setTotalPages(5);
       } catch (err) {
         setError("Error fetching instructors.");
@@ -36,19 +37,11 @@ const AgentList = ({ requestData }) => {
         setLoading(false);
       }
     };
+    
 
     fetchInstructors();
   }, [currentPage]);
 
-  const handleDelete = async (instructorId) => {
-    try {
-      await axios.delete(`https://twpwlfdg-5000.inc1.devtunnels.ms/instructors/${instructorId}`);
-      setInstructors(instructors.filter((instructor) => instructor.id !== instructorId));
-      alert("Instructor deleted successfully.");
-    } catch (err) {
-      alert("Error deleting instructor.", instructorId);
-    }
-  };
 
   const handleNextPage = () => {
     if (currentPage < totalPages) setCurrentPage(currentPage + 1);
@@ -58,15 +51,41 @@ const AgentList = ({ requestData }) => {
     if (currentPage > 1) setCurrentPage(currentPage - 1);
   };
 
-  const handleViewInstructor = (instructorId) => {
-    router.push(`/instructor/${instructorId}`);
-  };
 
-  const handleEdit = (instructorId) => {
-    setEditingId(instructorId);
-    const instructor = instructors.find((instructor) => instructor.instructor_unique_id === instructorId);
-    setEditedData({ ...instructor });
-  };
+
+ const handleDelete = async (uniqueId, updateUI) => {
+  try {
+    const response = await fetch('http://localhost:5000/delete', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ unique_id: uniqueId }),
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      console.error('Error:', result.error);
+      alert(`Failed to delete: ${result.error}`);
+      return;
+    }
+
+    alert(result.message);
+  
+    if (typeof updateUI === 'function') {
+      updateUI(uniqueId);
+    }
+  } catch (error) {
+    console.error('Network Error:', error);
+    alert('Network error, please try again later.');
+  }
+};
+  
+
+const removeInstructorFromUI = (uniqueId) => {
+  setInstructors(prev => prev.filter(instructor => instructor.instructor_unique_id !== uniqueId));
+};
 
   const handleInputChange = (e, field) => {
     setEditedData({
@@ -78,7 +97,7 @@ const AgentList = ({ requestData }) => {
   const uniqueGroups = [...new Set(instructors.map((instructor) => instructor.group_name))];
 
   const filteredInstructors = instructors.filter((instructor) => {
-    const matchesSearch = instructor.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSearch = instructor.instructor_name.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesGroup = selectedGroup === "All" || instructor.group_name === selectedGroup;
     return matchesSearch && matchesGroup;
   });
@@ -177,7 +196,7 @@ const AgentList = ({ requestData }) => {
                               className="form-control"
                             />
                           ) : (
-                            instructor.name
+                            instructor.instructor_name
                           )}
                         </td>
                         <td>
@@ -189,7 +208,7 @@ const AgentList = ({ requestData }) => {
                               className="form-control"
                             />
                           ) : (
-                            instructor.email
+                            instructor.instructor_email
                           )}
                         </td>
                         <td>
@@ -201,7 +220,7 @@ const AgentList = ({ requestData }) => {
                               className="form-control"
                             />
                           ) : (
-                            instructor.password
+                            instructor.instructor_password
                           )}
                         </td>
                         <td>
@@ -228,7 +247,7 @@ const AgentList = ({ requestData }) => {
                             instructor.instructor_unique_id
                           )}
                         </td>
-                        <td>{new Date(instructor.created_at).toLocaleDateString()}</td>
+                        <td>{(instructor.created_at)}</td>
                         <td>
                           <span
                             className={`badge bg-${
@@ -255,7 +274,7 @@ const AgentList = ({ requestData }) => {
                               <Button
                                 variant="soft-primary"
                                 size="sm"
-                                onClick={() => handleEdit(instructor.instructor_unique_id)}
+                                // onClick={() => handleEdit(instructor.instructor_unique_id)}
                               >
                                 <IconifyIcon icon="solar:pen-2-broken" className="align-middle fs-18" />
                               </Button>
@@ -263,7 +282,7 @@ const AgentList = ({ requestData }) => {
                             <Button
                               variant="soft-danger"
                               size="sm"
-                              onClick={() => alert(instructor.instructor_unique_id)}
+                              onClick={() => handleDelete(instructor.instructor_unique_id, removeInstructorFromUI)}
                             >
                               <IconifyIcon icon="solar:trash-bin-minimalistic-2-broken" className="align-middle fs-18" />
                             </Button>
