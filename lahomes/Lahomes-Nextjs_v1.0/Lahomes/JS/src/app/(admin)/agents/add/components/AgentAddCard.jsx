@@ -1,89 +1,112 @@
-import avatar2 from '@/assets/images/users/avatar-2.jpg';
-import IconifyIcon from '@/components/wrappers/IconifyIcon';
-import Image from 'next/image';
-import Link from 'next/link';
-import { Button, Card, CardBody, CardFooter, Col, Row } from 'react-bootstrap';
-const AgentAddCard = () => {
-  return <Col xl={3} lg={4}>
+'use client';
+
+import { useState } from 'react';
+import axios from 'axios';
+import TextFormInput from '@/components/from/TextFormInput';
+import { yupResolver } from '@hookform/resolvers/yup';
+import { Button, Card, CardBody, CardHeader, CardTitle, Col, Row, Alert } from 'react-bootstrap';
+import { useForm } from 'react-hook-form';
+import * as yup from 'yup';
+const id= localStorage.getItem("admin_unique_id");
+
+
+const AgentAdd = () => {
+  const [message, setMessage] = useState(null);
+  const [error, setError] = useState(null);
+
+  const messageSchema = yup.object({
+    name: yup.string().required('Please enter name'),
+    email: yup.string().email().required('Please enter email'),
+    password: yup.string().required('Please enter password'),
+    confirmPassword: yup.string()
+      .oneOf([yup.ref('password'), null], 'Passwords must match')
+      .required('Please confirm password'),
+  });
+
+  const { handleSubmit, control, reset } = useForm({
+    resolver: yupResolver(messageSchema),
+  });
+
+  const onSubmit = async (data) => {
+    alert("Add instructor")
+    setMessage(null);
+    setError(null);
+    
+    const requestData = {
+      ...data,
+      admin_unique_id: id
+    };
+    try {
+      const response = await axios.post('http://localhost:5000/register', requestData, {
+        headers: { 'Content-Type': 'application/json' }
+      });
+      setMessage(response.data.message || 'Instructor added successfully!');
+      reset();
+    } catch (err) {
+      console.error('Error:', err);
+      setError(err.response?.data?.error || 'Something went wrong');
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit(onSubmit)}>
       <Card>
+        <CardHeader>
+          <CardTitle as="h4">Add Members Information</CardTitle>
+        </CardHeader>
         <CardBody>
-          <div className="d-flex align-items-center gap-2 border-bottom pb-3">
-            <Image src={avatar2} alt="avatar" className="avatar-lg rounded-3 border border-light border-3" />
-            <div className="d-block">
-              <Link href="" className="text-dark fw-medium fs-16">
-                Michael A. Miner
-              </Link>
-              <p className="mb-0">michaelminer@dayrep.com</p>
-              <p className="mb-0 text-primary"># 1</p>
-            </div>
-          </div>
-          <p className="mt-3 d-flex align-items-center gap-2 mb-2">
-            <IconifyIcon icon="solar:home-bold-duotone" className="fs-18 text-primary" />
-            243 Properties
-          </p>
-          <p className="d-flex align-items-center gap-2 mt-2">
-            <IconifyIcon icon="solar:map-point-wave-bold-duotone" className="fs-18 text-primary" />
-            Lincoln Drive Harrisburg, PA 17101 U.S.A
-          </p>
-          <h5 className="my-3">Social Media :</h5>
-          <ul className="list-inline d-flex gap-1 mb-0 align-items-center">
-            <li className="list-inline-item">
-              <Link href="" className="btn btn-soft-primary  avatar-sm d-flex align-items-center justify-content-center">
-                <span>
-                  {' '}
-                  <IconifyIcon width={20} height={20} icon="ri:facebook-fill" />
-                </span>
-              </Link>
-            </li>
-            <li className="list-inline-item">
-              <Button variant="soft-danger" className="avatar-sm d-flex align-items-center justify-content-center">
-                <span>
-                  {' '}
-                  <IconifyIcon width={20} height={20} icon="ri:instagram-line" />
-                </span>
-              </Button>
-            </li>
-            <li className="list-inline-item">
-              <Button variant="soft-info" className="avatar-sm d-flex align-items-center justify-content-center ">
-                <span>
-                  {' '}
-                  <IconifyIcon width={20} height={20} icon="ri:twitter-line" />
-                </span>
-              </Button>
-            </li>
-            <li className="list-inline-item">
-              <Button variant="soft-success" className="avatar-sm d-flex align-items-center justify-content-center">
-                <span>
-                  {' '}
-                  <IconifyIcon width={20} height={20} icon="ri:whatsapp-line" />
-                </span>
-              </Button>
-            </li>
-            <li className="list-inline-item">
-              <Button variant="soft-warning" className="avatar-sm d-flex align-items-center justify-content-center">
-                <span>
-                  {' '}
-                  <IconifyIcon width={20} height={20} icon="ri:mail-line" />
-                </span>
-              </Button>
-            </li>
-          </ul>
-        </CardBody>
-        <CardFooter className="bg-light-subtle">
-          <Row className="g-2">
+          {message && <Alert variant="success">{message}</Alert>}
+          {error && <Alert variant="danger">{error}</Alert>}
+          <Row>
             <Col lg={6}>
-              <Button variant="outline-primary" className="w-100">
-                Add Agent
-              </Button>
+              <div className="mb-3">
+                <TextFormInput control={control} name="name" placeholder="Full Name" label=" Name" />
+              </div>
             </Col>
             <Col lg={6}>
-              <Button variant="danger" className="w-100">
-                Cancel
-              </Button>
+              <div className="mb-3">
+                <TextFormInput control={control} name="email" placeholder="Enter Email" label=" Email" />
+              </div>
+            </Col>
+            <Col lg={6}>
+              <div className="mb-3">
+                <TextFormInput control={control} name="group_name" placeholder="enter the  Group" label=" Group Name" />
+              </div>
+            </Col>
+            <Col lg={6}>
+              <div className="mb-3">
+                <TextFormInput control={control} name="password" type="password" placeholder="Enter Password" label="Enter Password" />
+              </div>
+            </Col>
+            <Col lg={6}>
+              <div className="mb-3">
+                <TextFormInput control={control} name="role" placeholder="Enter the  Role" label="Role" />
+              </div>
+            </Col>
+            <Col lg={6}>
+              <div className="mb-3">
+                <TextFormInput control={control} name="confirmPassword" type="password" placeholder="Confirm Password" label="Confirm Password" />
+              </div>
             </Col>
           </Row>
-        </CardFooter>
+        </CardBody>
       </Card>
-    </Col>;
+      <div className="mb-3 rounded">
+        <Row className="justify-content-end g-2">
+          <Col lg={2}>
+            <Button type="submit" variant="outline-primary" className="w-100">
+              Create Member
+            </Button>
+          </Col>
+          <Col lg={2}>
+            <Button variant="danger" className="w-100" onClick={() => reset()}>
+              Cancel
+            </Button>
+          </Col>
+        </Row>
+      </div>
+    </form>
+  );
 };
-export default AgentAddCard;
+
+export default AgentAdd;
