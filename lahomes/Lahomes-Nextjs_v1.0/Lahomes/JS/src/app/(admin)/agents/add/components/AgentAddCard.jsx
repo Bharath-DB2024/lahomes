@@ -52,7 +52,7 @@ const AgentAdd = () => {
     <form onSubmit={handleSubmit(onSubmit)}>
       <Card>
         <CardHeader>
-          <CardTitle as="h4">Add Members Information</CardTitle>
+          <CardTitle as="h4">Add Instructor Information</CardTitle>
         </CardHeader>
         <CardBody>
           {message && <Alert variant="success">{message}</Alert>}
